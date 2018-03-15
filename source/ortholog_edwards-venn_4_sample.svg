@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 18.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 700 700" style="enable-background:new 0 0 700 700;" xml:space="preserve">
+	 viewBox="0 0 700 700" enable-background="new 0 0 700 700" xml:space="preserve" style="width: 800px;">
 <path style="opacity:0.2;fill:#58595B;stroke:#3A53A4;stroke-width:3;" d="M318.7,635.2c-31.4-13.5-42.6-51.8-34.1-82.8
 	c4.6-23.7,6.8-51.8-8.9-71.6c-19.1-20.1-44.6-27.9-68.9-15.3c-31.7,9.5-72,1.2-87.6-30.7c-18-34.9-2.7-86.3,37.5-97
 	c25.5-8,51.4,3.1,76.5,6.2c23.3-7,52.3-21.4,52.8-49.5c1.8-30.7-5.4-62,0.5-92.4c13-28.6,46.3-43.8,76.6-36.8
@@ -16,7 +16,7 @@
 	c0-6.6,5.4-12,12-12h290.3c6.6,0,12,5.4,12,12v539.6C665.2,669.1,659.8,674.5,653.2,674.5z"/>
 <path style="opacity:0.2;fill:#2E3192;stroke:#010101;stroke-width:3;" d="M653.8,674.5h-606c-6.6,0-12-5.4-12-12V419.4
 	c0-6.6,5.4-12,12-12h606c6.6,0,12,5.4,12,12v243.1C665.8,669.1,660.4,674.5,653.8,674.5z"/>
-<text transform="matrix(1 0 0 1 593.8564 204.3211)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:48;">A</text>
+<text transform="matrix(1 0 0 1 553.8564 204.3211)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:48;">A</text>
 <text transform="matrix(1 0 0 1 77.875 127.2716)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:14;">Edwards-Venn 4-set diagram</text>
 <text transform="matrix(1 0 0 1 70.8683 165.8092)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:14;">NameA</text>
 <text transform="matrix(1 0 0 1 70.8684 185.2626)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:14;">NameB</text>
@@ -32,7 +32,7 @@
 <text transform="matrix(1 0 0 1 144.8271 448.5716)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:24;">BCD</text>
 <text transform="matrix(1 0 0 1 359.3143 595.1683)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:24;">ABD</text>
 <text transform="matrix(1 0 0 1 98.7921 338.0172)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:24;">C</text>
-<text transform="matrix(1 0 0 1 309.316 211.6546)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:24;">D</text>
+<text transform="matrix(1 0 0 1 295.316 211.6546)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:24;">D</text>
 <text transform="matrix(1 0 0 1 366.3867 211.6544)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:24;">AD</text>
 <text transform="matrix(1 0 0 1 497.6803 378.1)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:24;">ACD</text>
 <text transform="matrix(1 0 0 1 490.6076 448.5714)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:24;">ABCD</text>

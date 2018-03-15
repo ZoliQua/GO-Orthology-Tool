@@ -37,4 +37,4 @@
 
 <p>All source files such as codes and files are publicly available in my GitHub repository on the following address:</p>
 <p><a href="https://github.com/ZoliQua/GO-Extension-Tool" target="_blank">https://github.com/ZoliQua/GO-Extension-Tool</a></p>
-<p><img src="_media/images/github_logo.png"></p>
+<p><img src="media/images/github_logo.png"></p>

@@ -1,21 +1,42 @@
 <?php
 
-/* (c) Dúl Zoltán 2014, 2015, 2016 */
-/* SVG Analyzer plugin */
+/*
+* ** DO NOT REMOVE **
+* *******************
+* Project Name: GeneOntology Extension Tool
+* Project Website: http://go.orthologfindertool.com
+* Project Version: Public Version 1.0
+*
+* Project Source Code: https://github.com/ZoliQua/GO-Extension-Tool
+*
+* Author: Zoltan Dul, 2018
+* Email: zoltan.dul@kcl.ac.uk and zoltan.dul@gmail.com
+* Twitter: @ZoliQa
+*
+* DESCRIPTION
+* ****************
+* A bioinformatics tool that aims to extend Gene Ontology and give novel suggestions for 
+* funcional annotation, based on their orthological relation.
+*
+* PHP FILE
+* *******************
+* Page - ANALYZER
+* *******************
+*
+* All code can be used under GNU General Public License version 2.
+* If you have any question or find some bug please email me.
+*
+*/
 
-include_once("analyzer_include_mySQL2018.php");
+// Classes
 
-$this_file = basename(__FILE__);
-
-//osztályok
-
-class Lekeres {
+class QueryGO {
 
 	public $sorsz = 0;
 	public $lista;
 	public $values;
 	public $printelni = ""; // ebbe megy az SVG kódja
-	public $informaciok = ""; // ez az információk stringje
+	public $infos = ""; // ez az információk stringje
 	private $faj = array();
 	private $faj_mid2lil = array();
 	private $kiiras_beolv;
@@ -37,7 +58,9 @@ class Lekeres {
 	private $folders;
 	private $arrSizeControl = array();
 	public $containertable = array();
-	public $printertable = "";
+	public $strTablePrint = "";
+	public $strConservedCore = "";
+	public $strNovelAnnotations = "";
 
 	public function __construct($files, $folders, $faj, $given_values, $gos) {
 
@@ -74,7 +97,7 @@ class Lekeres {
 	private function mysql_conn (){
 
 		$config['user'] = 'root';
-		$config['password'] = 'zolis';
+		$config['password'] = 'rootpass';
 		$config['db'] = 'orthology';
 		$config['host'] = 'localhost';
 		$config['port'] = 3306;
@@ -96,6 +119,8 @@ class Lekeres {
 		$this->get_values["inside"] = $given_values["ins"];
 		$this->get_values["first"] = $given_values["first"];
 		$this->get_values["go"] = $given_values["go"];
+		$this->get_values["type"] = $given_values["type"];
+		$this->get_values["threshold"] = $given_values["threshold"];
 		$this->get_values["sizemanual"] = $given_values["sizemanual"];
 
 		if (count($this->get_values["species"] ) == $given_values["num"] ) {
@@ -152,6 +177,8 @@ class Lekeres {
 	private function db_processor($go) {
 
 		$db_processor_time = microtime(true);
+
+		// FIRST QUERY
 		
 		/*
 		$thisSQL = "SELECT `faj1`, `uniprot1`, `faj2`, `uniprot2`, `db1`, `db2`, `db3`, `db4`, `db5`, `db6` 
@@ -170,40 +197,53 @@ class Lekeres {
 		$result = mysqli_query( $this->MySQLiLink, $thisSQL );
 		if(mysqli_errno($this->MySQLiLink)) print mysqli_error($this->MySQLiLink);
 
+		// CELL SIZE + manual list
 		
-		
-		if($go == "GO:0008361") {
+			if($go == "GO:0008361") {
 
-			if($this->get_values["sizemanual"]) {
+				if($this->get_values["sizemanual"]) {
 
-				$file = "output/ALL_ortholog_dbs_merged_added.csv";
-				$this->arrSizeControl = $this->leker_lista($file);
+					$file = "output/ALL_ortholog_dbs_merged_added.csv";
+					$this->arrSizeControl = $this->leker_lista($file);
+
+				}
+
+				while ($row = mysqli_fetch_array($result) ) $this->arrSizeControl[ $row['db1'] ] = $row['db1'];
+
+				$groupQuery = "'" . implode("','", $this->arrSizeControl) . "'";
 
 			}
 
-			while ($row = mysqli_fetch_array($result) ) $this->arrSizeControl[ $row['db1'] ] = $row['db1'];
+			else {
 
-			$groupQuery = "'" . implode("','", $this->arrSizeControl) . "'";
+				$groupQuery = "";
+				while ($row = mysqli_fetch_array($result) ) $groupQuery .= "'" . $row['db1'] . "',";
+				$groupQuery = substr($groupQuery, 0, -1);
 
-		}
+			}
 
-		else {
+		// SECOND QUERY
 
-			$groupQuery = "";
-			while ($row = mysqli_fetch_array($result) ) $groupQuery .= "'" . $row['db1'] . "',";
-			$groupQuery = substr($groupQuery, 0, -1);
+		// NUMBER OF SPECIES CHECK
 
-		}
+			$strSpeciesIF = "";
 
+			if($this->species_number < 7) {
 
-		// SECOND
+				$strSpeciesIF = "AND (";
+
+				foreach ($this->species["mid"] as $strSpeciesName => $value) $strSpeciesIF .= "orth.faj1='" . $strSpeciesName . "'" . " OR ";
+
+				$strSpeciesIF = substr($strSpeciesIF, 0, -3) . ")";
+
+			}
 
 
 		$thisSQL = "SELECT `faj1`, `uniprot1`, `db1` 
 					FROM `orthology_databases` AS `orth`
 					INNER JOIN `geneontology` ON (orth.uniprot1 = geneontology.uniprot)
-					WHERE geneontology.super_acc = '" . $go . "' AND (orth.db1 != '')
-					GROUP BY(orth.uniprot1)";		
+					WHERE geneontology.super_acc = '" . $go . "' AND (orth.db1 != '') " . $strSpeciesIF . " 
+					GROUP BY(orth.uniprot1)";
 
 		$result = mysqli_query( $this->MySQLiLink, $thisSQL );
 		if(mysqli_errno($this->MySQLiLink)) print mysqli_error($this->MySQLiLink);
@@ -217,7 +257,9 @@ class Lekeres {
 
 		// THIRD
 
-		$thisSQL = "SELECT `faj1`, `uniprot1`, `faj2`, `uniprot2`, `db1`, `db2`, `db3`, `db4`, `db5`, `db6` 
+		// not using line: SELECT `faj1`, `uniprot1`, `faj2`, `uniprot2`, `db1`, `db2`, `db3`, `db4`, `db5`, `db6` 
+
+		$thisSQL = "SELECT `faj1`, `uniprot1`, `faj2`, `uniprot2`, `db1`
 					FROM `orthology_databases` AS `orth`
 					WHERE orth.db1 IN (" . $groupQuery . ")";
 		
@@ -252,15 +294,24 @@ class Lekeres {
 			$this->groupID2spec[$groupID][$row['faj1']] = $row['uniprot1'];
 			$this->groupID2spec[$groupID][$row['faj2']] = $row['uniprot2'];
 
-			if(! array_key_exists($row['uniprot1'], $this->mappings[$row['faj1']])) $this->mappings[$row['faj1']][$row['uniprot1']] = array($row['faj2'] => array($row['uniprot2'] => $row['uniprot2']));
-			elseif(! array_key_exists($row['faj2'], $this->mappings[$row['faj1']][$row['uniprot1']])) $this->mappings[$row['faj1']][$row['uniprot1']][$row['faj2']] = array($row['uniprot2'] => $row['uniprot2']);
+			if(! array_key_exists($row['uniprot1'], $this->mappings[$row['faj1']])) 
+				$this->mappings[$row['faj1']][$row['uniprot1']] = array($row['faj2'] => array($row['uniprot2'] => $row['uniprot2']));
+
+			elseif(! array_key_exists($row['faj2'], $this->mappings[$row['faj1']][$row['uniprot1']])) 
+				$this->mappings[$row['faj1']][$row['uniprot1']][$row['faj2']] = array($row['uniprot2'] => $row['uniprot2']);
+
 			else $this->mappings[$row['faj1']][$row['uniprot1']][$row['faj2']][$row['uniprot2']] = $row['uniprot2'];
 
-			if(! array_key_exists($row['uniprot2'], $this->mappings[$row['faj2']])) $this->mappings[$row['faj2']][$row['uniprot2']] = array($row['faj1'] => array($row['uniprot1'] => $row['uniprot1']));
-			elseif(! array_key_exists($row['faj1'], $this->mappings[$row['faj2']][$row['uniprot2']])) $this->mappings[$row['faj2']][$row['uniprot2']][$row['faj1']] = array($row['uniprot1'] => $row['uniprot1']);
+			if(! array_key_exists($row['uniprot2'], $this->mappings[$row['faj2']])) 
+				$this->mappings[$row['faj2']][$row['uniprot2']] = array($row['faj1'] => array($row['uniprot1'] => $row['uniprot1']));
+
+			elseif(! array_key_exists($row['faj1'], $this->mappings[$row['faj2']][$row['uniprot2']])) 
+				$this->mappings[$row['faj2']][$row['uniprot2']][$row['faj1']] = array($row['uniprot1'] => $row['uniprot1']);
+
 			else $this->mappings[$row['faj2']][$row['uniprot2']][$row['faj1']][$row['uniprot1']] = $row['uniprot1'];
 			
-			if(! array_key_exists($row['uniprot1'], $this->protein_list2[ $this->faj_mid2lil[$row['faj1']] ])) $this->protein_list2[ $this->faj_mid2lil[$row['faj1']] ][$row['uniprot1']] = $row['uniprot1'];	
+			if(! array_key_exists($row['uniprot1'], $this->protein_list2[ $this->faj_mid2lil[$row['faj1']] ])) 
+				$this->protein_list2[ $this->faj_mid2lil[$row['faj1']] ][$row['uniprot1']] = $row['uniprot1'];	
 			
 			$this->counter[$row['faj1']]++;
 			$this->counter[$row['faj2']]++;
@@ -274,57 +325,14 @@ class Lekeres {
 
 		//$this->protein_list = $this->protein_list2;
 
-		$this->informaciok .= TimeEnd($db_processor_time, "DB Processor");
-	}
-
-	private function leker_lista($fajl) {
-
-		$this->szetszed1 = "\n";
-		$this->szetszed2 = "\r";
-
-		$fajl_beolvas = fopen($fajl,"r");
-		if(!$fajl_beolvas) $hiba .= "Nem tudtam beolvasni a 1. <b>" . $fajl . "</b> fájlt hozzáadásra!";
-
-		$fajl_tartalom = fread($fajl_beolvas, filesize($fajl));
-		$ujsor = explode($this->szetszed1,$fajl_tartalom);
-		if(count($ujsor) < 3 ) $ujsor = explode($this->szetszed2,$fajl_tartalom);
-			
-		$sor = 0;
-		$listerGroups = array();
-			
-		foreach ($ujsor as $sor_id => $sor_tartalom) {
-
-			$sor++;
-					
-			if ( empty($sor_tartalom) ) continue;
-			else {
-
-				$mezo = explode(";",$sor_tartalom);
-
-				$faj1 = $this->faj_mid2lil[ trim($mezo[0]) ];
-				$unip1 = trim($mezo[1]);
-				$faj2 = trim($mezo[2]);
-				$unip2 = trim($mezo[3]);
-				$db = trim($mezo[4]);
-
-				$listerGroups[$db] = $db;
-
-				if(! array_key_exists($faj1, $this->protein_list)) $this->protein_list[$faj1] = array($unip1 => $unip1);
-				elseif(! array_key_exists($unip1, $this->protein_list[$faj1])) $this->protein_list[$faj1][$unip1] = $unip1;
-				else continue;
-
-			}	
-
-		}
-
-		return $listerGroups;
+		$this->infos .= TimeEnd($db_processor_time, "DB Processor");
 	}
 
 	private function analyzer($faj) {
 
 		// SVG File
 
-			$svg_diagram = new SVG_File($this->folders, $this->species_number);
+			$svg_diagram = new SVG_File($this->folders, $this->species_number, $this->get_values["type"]);
 
 		// mid2lil & lil2mid & voltmar arrays
 
@@ -557,9 +565,9 @@ class Lekeres {
 
 							if($NumOfSpecs != count($this->groupID2spec[$this->unip2groupID[$unip1]]) ) continue;
 
-							if(! array_key_exists($this->unip2groupID[$unip1], $ListOfGroups)) $ListOfGroups[$this->unip2groupID[$unip1]] = array($faj1 => array($unip1 => ((array_key_exists($unip1, $this->protein_list[$fajKeys_mid2lil[$faj1]])) ? "<STRONG>".$unip1."</STRONG>" : $unip1 )));
-							if(! array_key_exists($faj1, $ListOfGroups[$this->unip2groupID[$unip1]])) $ListOfGroups[$this->unip2groupID[$unip1]][$faj1] = array($unip1 => ((array_key_exists($unip1, $this->protein_list[$fajKeys_mid2lil[$faj1]])) ? "<STRONG>".$unip1."</STRONG>" : $unip1 ));
-							else $ListOfGroups[$this->unip2groupID[$unip1]][$faj1][$unip1] = ((array_key_exists($unip1, $this->protein_list[$fajKeys_mid2lil[$faj1]])) ? "<STRONG>".$unip1."</STRONG>" : $unip1 );
+							if(! array_key_exists($this->unip2groupID[$unip1], $ListOfGroups)) $ListOfGroups[$this->unip2groupID[$unip1]] = array($faj1 => array($unip1 => ((array_key_exists($unip1, $this->protein_list[$fajKeys_mid2lil[$faj1]])) ? "<STRONG><A href=\"http://www.uniprot.org/uniprot/".$unip1."\" target=\"_blank\">".$unip1."</A></STRONG>" : "<A href=\"http://www.uniprot.org/uniprot/".$unip1."\" target=\"_blank\">".$unip1."</A>" )));
+							if(! array_key_exists($faj1, $ListOfGroups[$this->unip2groupID[$unip1]])) $ListOfGroups[$this->unip2groupID[$unip1]][$faj1] = array($unip1 => ((array_key_exists($unip1, $this->protein_list[$fajKeys_mid2lil[$faj1]])) ? "<STRONG><A href=\"http://www.uniprot.org/uniprot/".$unip1."\" target=\"_blank\">".$unip1."</A></STRONG>" : "<A href=\"http://www.uniprot.org/uniprot/".$unip1."\" target=\"_blank\">".$unip1."</A>" ));
+							else $ListOfGroups[$this->unip2groupID[$unip1]][$faj1][$unip1] = ((array_key_exists($unip1, $this->protein_list[$fajKeys_mid2lil[$faj1]])) ? "<STRONG><A href=\"http://www.uniprot.org/uniprot/".$unip1."\" target=\"_blank\">".$unip1."</A></STRONG>" : "<A href=\"http://www.uniprot.org/uniprot/".$unip1."\" target=\"_blank\">".$unip1."</A>" );
 
 						}						
 
@@ -583,28 +591,79 @@ class Lekeres {
 
 			}
 
-		// INFORMACIOK KIIRASA
+		// infos KIIRASA
 
-			$current_info = $this->informaciok;
-			$this->informaciok = "";
+			$current_info = $this->infos;
+			$this->infos = "";
 
-			$this->informaciok .= "The Query was asked ". count($spec)." species out of 7.";
+			$this->infos .= "The Query was asked ". count($this->species)." species out of 7. <BR>\n";
 
 			foreach ($this->protein_list2 as $this_faj => $arri) {
 
-				$this->informaciok .= "The " . $faj[strtolower($this_faj)]["mid"] . " contains: " . count($arri) . " query UniProt IDs.<BR>\n";
+				$this->infos .= "The " . $faj[strtolower($this_faj)]["mid"] . " contains: " . count($arri) . " query UniProt IDs.<BR>\n";
 
 				if(! $this->get_values["inside"]) $tomb_count[$this_faj] = count($tomb[$this_faj]);
 				else $tomb_count[$this_faj] = count($arri) - $tomb_count[$this_faj];
 
 			}
 
-			//$this->informaciok .= "<BR><BR>In Overall Center are ($overall_center) :: <BR> <TEXTAREA cols=70 rows=10>".$overall_list."</TEXTAREA>";
+			//$this->infos .= "<BR><BR>In Overall Center are ($overall_center) :: <BR> <TEXTAREA cols=70 rows=10>".$overall_list."</TEXTAREA>";
 
-			$this->informaciok .= $current_info;
+			$this->infos .= $current_info;
+
+			$tomb_count["AT"] = "AT";
+			$tomb_count["CE"] = "CE";
+			$tomb_count["DM"] = "DM";
+			$tomb_count["DR"] = "DR";
+			$tomb_count["HS"] = "HS";
+			$tomb_count["SC"] = "SC";
+			$tomb_count["SP"] = "SP";
 
 			self::CreateTable();
 			self::Kiir($svg_diagram->svg, $tomb_count, $translator);
+	}
+
+	private function leker_lista($fajl) {
+
+		$this->szetszed1 = "\n";
+		$this->szetszed2 = "\r";
+
+		$fajl_beolvas = fopen($fajl,"r");
+		if(!$fajl_beolvas) $hiba .= "Nem tudtam beolvasni a 1. <b>" . $fajl . "</b> fájlt hozzáadásra!";
+
+		$fajl_tartalom = fread($fajl_beolvas, filesize($fajl));
+		$ujsor = explode($this->szetszed1,$fajl_tartalom);
+		if(count($ujsor) < 3 ) $ujsor = explode($this->szetszed2,$fajl_tartalom);
+			
+		$sor = 0;
+		$listerGroups = array();
+			
+		foreach ($ujsor as $sor_id => $sor_tartalom) {
+
+			$sor++;
+					
+			if ( empty($sor_tartalom) ) continue;
+			else {
+
+				$mezo = explode(";",$sor_tartalom);
+
+				$faj1 = $this->faj_mid2lil[ trim($mezo[0]) ];
+				$unip1 = trim($mezo[1]);
+				$faj2 = trim($mezo[2]);
+				$unip2 = trim($mezo[3]);
+				$db = trim($mezo[4]);
+
+				$listerGroups[$db] = $db;
+
+				if(! array_key_exists($faj1, $this->protein_list)) $this->protein_list[$faj1] = array($unip1 => $unip1);
+				elseif(! array_key_exists($unip1, $this->protein_list[$faj1])) $this->protein_list[$faj1][$unip1] = $unip1;
+				else continue;
+
+			}	
+
+		}
+
+		return $listerGroups;
 	}
 
 	private function mappings_cycle($keys, $tomb, $fajKeys_mid2lil){
@@ -666,7 +725,7 @@ class Lekeres {
 				$pair_container[$lil] = $this_tomb2;			
 			}
 
-			$this->informaciok .= TimeEnd($mappins_cylce_time, "Mappings Cycle");
+			$this->infos .= TimeEnd($mappins_cylce_time, "Mappings Cycle");
 
 			// pair containers: [faj1][faj2][unip2][unip1]
 			// tomb: [faj1][faj2][unip2]
@@ -700,42 +759,95 @@ class Lekeres {
 
 	public function CreateTable(){
 
-		// content
+		// Content
 
 		$id = 0;
+		$boolPrintTitle = true;
+		$strConservedCore = ""; 
+		$strNovelAnnotations = ""; 
 
-		$print_title = true;
-		$this->printertable .= "<DIV align='center'>\n<TABLE id='mytable' width='90%'>\n";
 
-		$table = "";
+		$this->strTablePrint .= "<BR>\n<H1 stlye=\"center\">Current Annotations based on Orthology</H1>\n";
+		$this->strTablePrint .= "<div style=\"text-align: center;\">Hit species threshold: <b>" . $this->get_values["threshold"] . "</b></div>\n";
 
-		$table .= "<THEAD>\n";
-		$table .= "<TR>\n";
-		$table .= "<TH><B>Group</B></TH>\n";
-		$table .= "<TH><B>Weighted Av. H/M</B></TH>\n"; 
-		$table .= "<TH><B>Total H/M ratio</B></TH>\n";
-		$table .= "<TH><B>Hits in all species</B></TH>\n";
-		$table .= "<TH><B>Tot. Members</B></TH>\n"; 
-		$table .= "<TH><B>Hits</B></TH>\n"; 
-		$table .= "<TH><B>List of Members</B></TH>\n"; 
-		$table .= "<TH><B>More</B></TH>\n"; 
-		$table .= "</TR>\n";		
-		$table .= "</THEAD>\n";
-		$table .= "<TBODY>\n";
+		$this->strConservedCore .= "<BR>\n<H1 stlye=\"center\">Conserved Core</H1>\n";
+		$this->strConservedCore .= "<div style=\"text-align: center;\">Hit species threshold: <b>" . $this->get_values["threshold"] . "</b></div>\n";
 
-		$this->printertable .= $table;
+		$this->strNovelAnnotations .= "<BR>\n<H1 stlye=\"center\">Novel Annotations based on Orthology</H1>\n";
+
+		$strTableHead = "
+			<THEAD>
+				<TR>
+				<TH><B>Group</B></TH>
+				<TH><B>Weighted Av. H/M</B></TH>
+				<TH><B>Total H/M ratio</B></TH>
+				<TH><B>Hits in all species</B></TH>
+				<TH><B>Tot. Members</B></TH>
+				<TH><B>Species (hit)</B></TH>
+				<TH><B>Species (total)</B></TH>
+				<TH><B>List of Members</B></TH>
+				<TH><B>More</B></TH>
+				</TR>
+			</THEAD>\n";
+
+		$strTableHeadNovelAnnotation = "
+			<THEAD>
+				<TR>
+				<TH><B>Group</B></TH>
+				<TH><B>Weighted Av. H/M</B></TH>
+				<TH><B>Species (total)</B></TH>
+				<TH><B>A. thaliana</B></TH>
+				<TH><B>C. elegans</B></TH>
+				<TH><B>D. melanogaster</B></TH>
+				<TH><B>D. rerio</B></TH>
+				<TH><B>H. sapiens</B></TH>
+				<TH><B>S. cerevisiae</B></TH>
+				<TH><B>S. pombe</B></TH>
+				</TR>
+			</THEAD>\n";
+
+		$strExportTable = preg_replace('/\s+/', '', substr(strip_tags(str_replace("</B>", ",", $strTableHead)), 0, -1));
+		// print $strExportTable;
+
+		$this->strTablePrint .= "<P></P>
+			<DIV align='center'>
+			<TABLE cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"display\" id=\"results\">\n";
+
+		$this->strConservedCore .= "<P></P>
+			<DIV align='center'>
+			<TABLE cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"display\" id=\"conservedcore\">\n";
+
+		$this->strNovelAnnotations .= "<P></P>
+			<DIV align='center'>
+			<TABLE cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"display\" id=\"novelannotations\">\n";
+
+		$this->strTablePrint .= $strTableHead;
+		$this->strConservedCore .= $strTableHead;
+		$this->strNovelAnnotations .= $strTableHeadNovelAnnotation;
+
+		$this->strTablePrint .= "\t\t\t<TBODY>\n";
+		$this->strConservedCore .= "\t\t\t<TBODY>\n";
+		$this->strNovelAnnotations .= "\t\t\t<TBODY>\n";
+
+		$strRowNovelAnnotationBase = array();
+		$strRowNovelAnnotationBase["group"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["ratio"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["totspec"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["AT"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["CE"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["DM"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["DR"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["HS"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["SC"] = "\t<TD>-</TD>\n";
+		$strRowNovelAnnotationBase["SP"] = "\t<TD>-</TD>\n";
 
 		foreach ($this->containertable as $this_key => $groups) {
+
+			// print $this_key . ": " . count($this->containertable[$this_key]) . "<BR>";
 
 			$id++;
 
 			$this_keys = explode(",", $this_key);
-			$numTDsize = 100 / ( (count($this->species) * 2 ) + 5 );
-
-			$table = "";
-			
-			// Printing headers for table
-
 
 			$numMeasureTotalSpecies = count($this_keys);
 			$numRowsInTable = 0;
@@ -744,10 +856,7 @@ class Lekeres {
 
 			foreach ($groups as $groupID => $arri2) {
 
-				$row = array();
-
-				$row[] = "<TR>\n";
-				$row[] = "\t<TD>$groupID (".$numMeasureTotalSpecies.")</TD>\n";
+				$strRowNovelAnnotation = $strRowNovelAnnotationBase;
 
 				$numMeasureTotalSpeciesHit = 0;
 				$numMeasureTotalMember = 0;
@@ -777,161 +886,83 @@ class Lekeres {
 					$numMeasureTotalMember += $arrMeasureMember[$v];
 					$numMeasureTotalHit += $arrMeasureHit[$v];
 
-					$numMeasureTotalSpeciesHit = ((strpos($txtListOfProteins, "STRONG") == true) ? ($numMeasureTotalSpeciesHit+1) : $numMeasureTotalSpeciesHit ); 
+					$numMeasureTotalSpeciesHit = ((strpos($txtListOfProteins, "STRONG") == true) ? ($numMeasureTotalSpeciesHit+1) : $numMeasureTotalSpeciesHit );
 
+					$strRowNovelAnnotation[$v] = "\t<TD> " . ((strpos($txtListOfProteins, "STRONG") == true) ? "<B>HIT</B>: " : "" ) . $txtListOfProteins . "</TD>\n";
 				}
 
-				if($numMeasureTotalSpeciesHit < 2) continue;
+				if($numMeasureTotalSpeciesHit < $this->get_values["threshold"]) continue;
 
-				$row[] = self::TableRowStatistics(2, $numTDsize, $this_keys, $numMeasureTotalSpecies, $numMeasureTotalSpeciesHit, $numMeasureTotalMember, $numMeasureTotalHit, $numMeasureTotalRatio, $arrMeasureMember, $arrMeasureHit, $arrMeasureRatio );
+				$numRatioWAvHM = self::TableRowStatistics($arrMeasureRatio);
+				$numRatioHM = number_format( (count($this_keys) / $numMeasureTotalMember), 3);
 
-				$row[] = "\t<TD>" . number_format(($numMeasureTotalMember / count($this_keys)), 3) . "</TD>\n";
+				$row = array();
 
+				$row[] = "<TR>\n";
+				$row[] = "\t<TD>$groupID (".$numMeasureTotalSpecies.")</TD>\n";
+				$row[] = "\t<TD>" . $numRatioWAvHM . "</TD>\n";
+				$row[] = "\t<TD>" . $numRatioHM . "</TD>\n";
 				$row[] = "\t<TD>" . $numMeasureTotalSpeciesHit . " hit id(s) in " . $numMeasureTotalSpecies . " species" . "</TD>\n";
-
-				$row[] = "\t<TD>$numMeasureTotalMember unique UniProt iDs belonging to this eggNOG Group in ". count($arrMembers) ." hit species</TD>\n";
-				$row[] = "\t<TD>$numMeasureTotalSpeciesHit</TD>\n";
+				$row[] = "\t<TD>" . $numMeasureTotalMember . " unique UniProt iDs belonging to this eggNOG Group in ". count($arrMembers) ." hit species</TD>\n";
+				$row[] = "\t<TD>" . $numMeasureTotalSpeciesHit . "</TD>\n";
+				$row[] = "\t<TD>" . $numMeasureTotalSpecies . "</TD>\n";
 				$row[] = "\t<TD>" . implode(", ", $arrMembers) . "</TD>\n";
 				$row[] = "\t<TD><i><A href='http://eggnogdb.embl.de/#/app/results?target_nogs=$groupID' target='_blank'>link to eggNOG</A></i></TD>\n";
 
 				$row[] = "</TR>\n";
 
-				$table .= implode("", $row);
+				$this->strTablePrint .= implode("", $row);
 
+				if( $numMeasureTotalSpecies == $numMeasureTotalSpeciesHit) $this->strConservedCore .= implode("", $row);
+
+				if( $numMeasureTotalSpecies == ($numMeasureTotalSpeciesHit + 1) AND ($numRatioWAvHM > 0.79) AND ($numRatioHM > 0.49)) {
+
+					$strRowNovelAnnotation["group"] = "\t<TD><A href='http://eggnogdb.embl.de/#/app/results?target_nogs=$groupID' target='_blank'>$groupID (".$numMeasureTotalSpecies.")</A></TD>\n";
+					$strRowNovelAnnotation["ratio"] = "\t<TD>" . $numRatioWAvHM . "</TD>\n";
+					$strRowNovelAnnotation["totspec"] = "\t<TD>" . $numMeasureTotalSpecies . "</TD>\n";
+
+					$this->strNovelAnnotations .= "<TR>\n" . implode("", $strRowNovelAnnotation) . "</TR>\n";
+
+				}
 			}
 
-			$this->printertable .= $table;
-
 		}
 
-		$table = "";
+		$this->strTablePrint .= "\t\t\t</TBODY>\n";
+		$this->strConservedCore .= "\t\t\t</TBODY>\n";
+		$this->strNovelAnnotations .= "\t\t\t</TBODY>\n";
 
-		$table .= "</TBODY>\n";
-		$table .= "<THEAD>\n";
-		$table .= "<TR>\n";
-		$table .= "<TH><B>Group</B></TH>\n";
-		$table .= "<TH><B>Weighted Av. H/M</B></TH>\n"; 
-		$table .= "<TH><B>Total H/M ratio</B></TH>\n";
-		$table .= "<TH><B>Hits in Specs</B></TH>\n";
-		$table .= "<TH><B>Tot. Members</B></TH>\n"; 
-		$table .= "<TH><B>Hits</B></TH>\n"; 
-		$table .= "<TH><B>List of Members</B></TH>\n"; 
-		$table .= "<TH><B>More</B></TH>\n"; 
-		$table .= "</TR>\n";		
-		$table .= "</THEAD>\n";
+		$this->strTablePrint .= str_replace("HEAD", "FOOT", $strTableHead);
+		$this->strConservedCore .= str_replace("HEAD", "FOOT", $strTableHead);
+		$this->strNovelAnnotations .= str_replace("HEAD", "FOOT", $strTableHeadNovelAnnotation);
 
-		$this->printertable .= $table;
+		$this->strTablePrint .= "</TABLE>\n";
+		$this->strConservedCore .= "</TABLE>\n";
+		$this->strNovelAnnotations .= "</TABLE>\n";
+		$this->strTablePrint .= "</DIV>";
+		$this->strConservedCore .= "</DIV>";
+		$this->strNovelAnnotations .= "</DIV>";
 
-		$this->printertable .= "</TABLE>\n";
-		$this->printertable .= "</DIV>";
+		$this->strTablePrint .= "<BR>\n<div class=\"infobox\">\n<A href=\"#\" target=\"_blank\">Download this table</A> in CSV file.</div><BR>";
+		$this->strConservedCore.= "<BR>\n<div class=\"infobox\">\n<A href=\"#\" target=\"_blank\">Download this table</A> in CSV file.</div><BR>";
+		$this->strNovelAnnotations .= "<BR>\n<div class=\"infobox\">\n<A href=\"#\" target=\"_blank\">Download this table</A> in CSV file.</div><BR>";
 
+		$this->strTablePrint .= $this->strConservedCore;
+		$this->strTablePrint .= $this->strNovelAnnotations;
 
 	}
 
-	private function TableRowStatistics($numText, $numTDsize, $this_keys, $numMeasureTotalSpecies, $numMeasureTotalSpeciesHit, $numMeasureTotalMember, $numMeasureTotalHit, $numMeasureTotalRatio, $arrMeasureMember, $arrMeasureHit, $arrMeasureRatio )  {
+	private function TableRowStatistics($arrMeasureRatio)  {
 
+		$numThisRatio = 0;
 
-		if($numText == 0) {
+		foreach ($arrMeasureRatio as $k => $v) $numThisRatio += $v;
+	
+		$numThisRatio = $numThisRatio / count($arrMeasureRatio);
 
-			$txtReturn = "\t<TD width=\"" . $numTDsize . "%\">";
-			$txtReturn .= "TOTAL SPECIES #:<BR>";
-			$txtReturn .= "HIT SPECIES #: <BR>";
-			$txtReturn .= "TOTAL MEMBER #: <BR>";
-			$txtReturn .= "AVERAGE MEMBER #: <BR>";
-			$txtReturn .= "TOTAL HIT #: <BR>";
-			$txtReturn .= "TOTAL H/M Ratio: <BR>";
-			$txtReturn .= "</TD>\n";
-
-			return $txtReturn; 
-		}
-
-		elseif($numText == 1) {
-
-			$txtReturn = "\t<TD width=\"" . $numTDsize . "%\">";
-			$txtReturn .= $numMeasureTotalSpecies . "<BR>";
-			$txtReturn .= $numMeasureTotalSpeciesHit . "<BR>";
-			$txtReturn .= $numMeasureTotalMember . "<BR>";
-			$txtReturn .= number_format(($numMeasureTotalMember / count($this_keys)), 3) . "<BR>";
-			$txtReturn .= $numMeasureTotalHit . "<BR>";
-			$txtReturn .= number_format(($numMeasureTotalHit / $numMeasureTotalMember), 3);
-			$txtReturn .= "</TD>\n";
-
-			return $txtReturn; 
-		}
-
-		elseif($numText == 2) {
-			
-			$numThisRatio = 0;
-			foreach ($arrMeasureRatio as $k => $v) $numThisRatio += $v;
-		
-			$numThisRatio = $numThisRatio / count($arrMeasureRatio);
-
-			$txtReturn = "\t<TD>";
-			$txtReturn .= number_format($numThisRatio, 6);
-			$txtReturn .= "</TD>\n";
-
-			return $txtReturn;
-		}
-
-		elseif($numText == 3) {
-
-			$numThisRatio = 0;
-
-			foreach ($arrMeasureRatio as $k => $v) $numThisRatio += $v;
-		
-			$numThisRatio = $numThisRatio / count($arrMeasureRatio);
-			$numThisRatio = $numThisRatio * ($numMeasureTotalSpecies / 7); 
-
-			$txtReturn = "\t<TD width=\"" . $numTDsize . "%\">";
-			$txtReturn .= $numThisRatio . "<BR>";
-			$txtReturn .= "</TD>\n";
-
-			return $txtReturn;
-		}
-
-		elseif($numText == 4) {
-
-			$numThisRatio = 0;
-			
-			foreach ($arrMeasureRatio as $k => $v) $numThisRatio += $v;
-		
-			$numThisRatio = $numThisRatio / count($arrMeasureRatio);
-			$numThisRatio = $numThisRatio * ($numMeasureTotalSpecies / 7); 
-
-			$numTotalHitDivTotalMember = ($numMeasureTotalHit / $numMeasureTotalMember);
-
-			$numThisRatio = number_format(($numThisRatio * $numTotalHitDivTotalMember), 4); 
-
-			$txtReturn = "\t<TD width=\"" . $numTDsize . "%\">";
-			$txtReturn .= $numThisRatio . "<BR>";
-			$txtReturn .= "</TD>\n";
-
-			return $txtReturn;
-		}
+		return number_format($numThisRatio, 6);
 
 	}
 }
-
-if( isset($_GET["ok"])) {
-
-	// Script Run
-
-		$eredmeny = new Lekeres($files, $folders4svg, $faj, $given_values, $gos);
-
-	// Print Out
-
-		$kiiras = file_put_contents($files["output"], $eredmeny->printelni);
-
-		print PrintThingsOut($eredmeny->printelni, $eredmeny->informaciok, $eredmeny->species_number, $this_file, $go, $gos, $faj);
-		print $eredmeny->printertable;
-
-}
-
-else print PrintThingsOut(false, false, false, $this_file, $go, $gos, $faj);
-
-
-// End
-
-	print TimeEnd($time_start);
 
 ?>

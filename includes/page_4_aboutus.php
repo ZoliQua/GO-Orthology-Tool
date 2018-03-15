@@ -30,14 +30,14 @@
 
 ?>
 <p align="center">
-	<IMG src="_media/images/dul_zoltan_2013public_big.png" alt="Zoltan Dul">
+	<IMG src="media/images/dul_zoltan_2013public_big.png" alt="Zoltan Dul">
 </p>
 <p align="center">
 <div class=etext style="font-weight: 700;">Zoltán Dul</div>PhD Student<BR> zoltan.dul@kcl.ac.uk<BR>
 </p>
 <div class="page"></div>
 <p align="center">
-	<IMG src="_media/images/logo_kcl.jpg" alt="King's College London">
+	<IMG src="media/images/logo_kcl.jpg" alt="King's College London">
 </p>
 
 <div class=etext style="font-weight: 700;">
@@ -54,7 +54,7 @@
 
 
 <p align="center">
-	<IMG src="_media/images/logo_fem.png" alt="Fondazione Edmund Mach">
+	<IMG src="media/images/logo_fem.png" alt="Fondazione Edmund Mach">
 </p>
 <div class=etext style="font-weight: 700;">
 	<a href="http://www.fmach.it/eng/CRI/general-info/organisation/Chief-scientific-office/Genomics-and-biology-of-fruit-crop/Biology-and-physiology" target="_blank">Genomics and biology of fruit crop  @ Fondazione Edmund Mach, San Michele All' Adige</a>

@@ -162,11 +162,14 @@
 
 		public $svg = "";
 
-		public function __construct($folders, $num, $type = "venn"){
+		public function __construct($folders, $num, $type = 1){
 
 			if($num < 2 OR $num > 7) $num = 5;
 
-			$filename = $folders . "ortholog_" . $type . "_" . $num . "_names.svg";
+			if($type == 1) $strType = "venn";
+			else $strType = "edwards-venn";
+
+			$filename = $folders . "ortholog_" . $strType . "_" . $num . "_sample.svg";
 			$svg_open = file_get_contents($filename);
 
 			$this->svg = $svg_open;
@@ -201,39 +204,115 @@
 		return "<p>The <i>$plustxt</i> execution time was $txt</p>\n";
 	}
 
-	function PrintThingsOut($venn_diagram = false, $more_info = false, $num = false, $this_file, $go, $gos, $faj) {
+	function PrintTheOutput($strVennDiagram = false, $strInfoPostVD = false, $strTable = false, $strInfoPostTable = false, $num = false, $this_file, $go, $gos, $species) {
 
-		$mit_printeljek = "";
+		$strOutput = "";
 
-		if($venn_diagram) {
-			$mit_printeljek .= "<div style=\"text-align: center;\">";
-			$mit_printeljek .= "<H1 stlye=\"center\">".$num."-set Venn Diagram</H1>\n";
-			$mit_printeljek .= "<H2 stlye=\"center\">$go - " . $gos[$go] . "</H2>";
-			$mit_printeljek .= $venn_diagram;
-			$mit_printeljek .= "</div>" . "<BR><BR>\n";
-			$mit_printeljek .= $more_info;
+		if($strVennDiagram) {
+
+			$strOutput .= "<div style=\"text-align: center;\">";
+			$strOutput .= "<H1 stlye=\"center\">".$num."-set Venn Diagram</H1>\n";
+			$strOutput .= "<H2 stlye=\"center\">$go - " . $gos[$go] . "</H2>";
+			$strOutput .= $strVennDiagram;
+			$strOutput .= "</div>" . "<BR><BR>\n";
+			$strOutput .= "<div class=\"infobox\">\n";
+			$strOutput .= $strInfoPostVD;
+			$strOutput .= "</div>";
 		}
 
-		$mit_printeljek .= "<BR><BR> <B>Choose a QUERY Form</B><BR>\n";
-		$mit_printeljek .= "<form method='GET'>";
+		if($strTable) $strOutput .= $strTable;
 
-		$mit_printeljek .= "GO categories: <select name='thisgo'>\n";
+		$strOutput .= "<BR><BR>\n<H1 stlye=\"center\">New Query</H1><BR>
+			<div class=\"text\">
+			<p style=\"font-style: italic;\">Please select a GO annotation, then 2-7 species with CTRL button (or CMD in Mac) to see their orthological GO analysis<BR> with Gene Ontology Extension Tool. You can choose the visaulization from three options.</p><BR>
+			<FORM method=\"POST\" name=\"goext\" action=\"main.php\">
+			<TABLE align=center border=0 cellpadding=7 cellspacing=0>
 
-		foreach ($gos as $k => $v) $mit_printeljek .= "<option value='$k'>$k - $v</option>\n";
+				<TR id=\"k0\">
 
-		$mit_printeljek .= "</select>\n";
+					<TD align=\"center\" width=\"50%\"><div class=ctext>GO annotation:</div></TD>
+					<TD align=\"center\" width=\"50%\"><div class=dtext >
+				    	<SELECT name=\"thisgo\" id=\"value_c\">";
 
-		$mit_printeljek .= "Species: <select name='specs[]' size=7 multiple>\n";
+		foreach ($gos as $k => $v) $strOutput .= "<OPTION value='$k'>$k - $v</OPTION>\n";
 
-		foreach ($faj as $v => $arr) $mit_printeljek .= "<option value='$v'>".$arr["long"]."</option>\n";
+		$strOutput .= "
+				 		</SELECT> &nbsp;</div>
+				 	</TD>
 
-		$mit_printeljek .= "</select>\n";
-		$mit_printeljek .= " Size Manual List <INPUT type='checkbox' name='sizemanual'> ";
+				</TR>
 
-		$mit_printeljek .= "<INPUT type='submit' name='ok' value='Query'>\n";
-		$mit_printeljek .= "</form>\n";
+				<TR id=\"k1\">
 
-		return $mit_printeljek;
+					<TD align=\"center\" width=\"50%\"><div class=ctext>Species: </div></TD>
+					<TD align=\"center\" width=\"50%\"><div class=dtext >
+				    	<SELECT name=\"specs[]\" size=\"7\" id=\"value_q\" multiple>";
+
+		foreach ($species as $v => $arr) $strOutput .= "<OPTION value='$v'>".$arr["long"]."</OPTION>\n";
+
+		$strOutput .= "
+				 		</SELECT> &nbsp;</div>
+				 	</TD>
+
+				</TR>
+
+				<TR id=\"k2\">
+
+					<TD align=\"center\" width=\"50%\"><div class=ctext>Venn Diagram type: </div></TD>
+					<TD align=\"center\" width=\"50%\"><div class=dtext >
+				    	<SELECT name=\"type\" id=\"value_d\">
+							<OPTION value=\"1\">Venn Diagram</OPTION>
+							<OPTION value=\"2\">Edwards-Venn Diagram</OPTION>
+							<OPTION value=\"3\">-no diagram-</OPTION>
+
+				 		</SELECT> &nbsp;</div>
+				 	</TD>
+
+				</TR>
+
+				<TR id=\"k3\">
+
+					<TD align=\"center\" width=\"50%\"><div class=ctext>Table - Hit species threshold: </div></TD>
+					<TD align=\"center\" width=\"50%\"><div class=dtext >
+				    	<SELECT name=\"threshold\" id=\"value_k\">
+
+							<OPTION value=\"2\">2 species</OPTION>
+							<OPTION value=\"3\">3 species</OPTION>
+							<OPTION value=\"4\">4 species</OPTION>
+							<OPTION value=\"5\">5 species</OPTION>
+							<OPTION value=\"6\">6 species</OPTION>
+							<OPTION value=\"7\">7 species</OPTION>
+
+				 		</SELECT> &nbsp;</div>
+				 	</TD>
+
+				</TR>
+
+				<TR id=\"k4\" style=\"display: none;\">
+
+					<TD align=\"center\" width=\"50%\"><div class=ctext>Size Manual list: </div></TD>
+					<TD align=\"center\" width=\"50%\"><div class=dtext >
+				    	<INPUT type='checkbox' name='sizemanual'>
+				 	</TD>
+
+				</TR>
+
+			    <TR>
+			    	<TD align=\"center\" width=\"50%\" colspan=2>
+			    		<div style=\"text-align: center;\">
+			    			<INPUT type=\"submit\" name=\"sent\" value=\"  GO  \">
+			    		</div>
+			    	</TD>
+			    </TR>
+			</TABLE>
+			</FORM>
+			</div>";
+
+		$strOutput .= "<div class=\"infobox\">\n";
+		$strOutput .= $strInfoPostTable;
+		$strOutput .= "</div>";
+
+		return $strOutput;
 	}
 
 ?>

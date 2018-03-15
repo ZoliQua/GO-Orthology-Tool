@@ -35,10 +35,6 @@
 	$folderSource = "source/";
 	$folderOutput = "output/";
 
-	$files = array();
-	$files["list"] = array();
-	//$files["output"] = $folderOutput  . "Venn-Diagram_" . $num . "_" . implode(",", $spec) . ".svg";
-
 // Name of Species and TaxIDs
 
 	$species = array();
@@ -130,62 +126,67 @@
 
 // PAGE DETECT
 
-	if((!isset($_POST) AND !isset($_GET["page"])) OR (isset($_GET["page"]) AND $_GET["page"] == "query") ) $numPage = 1;
-	elseif (isset($_POST["sent"])) $numPage = 2;
+	if( ! isset($_GET["page"]) ) $numPage = 1;
 	else {
 
-		if(!isset($_GET["page"])) $numPage = 1;
-		elseif ($_GET["page"] == "source") $numPage = 3;
+		if ($_GET["page"] == "source") $numPage = 3;
 		elseif ($_GET["page"] == "about") $numPage = 4;
 		else $numPage = 1;
+
 	}
 
 // INCLUDING PAGES
 
 	$arrThisPage = array();
 
-	$arrThisPage[1] = array("QUERY","inc_analyzer2.php");
+	$arrThisPage[1] = array("QUERY","page_1_analyzer.php");
 	$arrThisPage[2] = array("QUERY RESULTS","page_2_analysis_original.php");
-	$arrThisPage[3] = array("Sources","page_sources.php");
-	$arrThisPage[4] = array("About us","page_aboutus.php");
+	$arrThisPage[3] = array("Sources","page_3_sources.php");
+	$arrThisPage[4] = array("About us","page_4_aboutus.php");
 
 	$thisPageIncl = $folderIncl . "/" . $arrThisPage[$numPage][1];
 	$thisPageTitle = $arrThisPage[$numPage][0];
 
 // PAGE DETECTING VALUES
 
-	$speciesok = ["at", "ce", "dm", "dr", "hs", "sc", "sp"];
+	$arrSpeciesAll = ["at", "ce", "dm", "dr", "hs", "sc", "sp"];
 
-	if(! isset($_GET["mit"])) $mit = "real";
-	elseif(trim($_GET["mit"]) == "real" OR trim($_GET["mit"]) == "sum") $mit = trim($_GET["mit"]);
-	else $mit = "real";
-
-	if(! isset($_GET["ins"])) $ins = false;
-	elseif(trim($_GET["ins"]) == 1 ) $ins = true;
-	else $ins = false;
-
-	if(! isset($_GET["first"])) $first = false;
-	elseif(trim($_GET["first"]) == 1 ) $first = true;
-	else $first = false;
-
-	if(! isset($_GET["specs"])) $spec = $speciesok;
-	elseif( count($_GET["specs"]) < 2 ) $spec = $speciesok;
-	elseif( SpeciesValidation($_GET["specs"], $speciesok) ) $spec = SpeciesValidation($_GET["specs"], $speciesok);
-	else $spec = $speciesok;
-
-	if(! isset($_GET["thisgo"])) $go = "GO:0000902";
-	elseif( array_key_exists(trim($_GET["thisgo"]), $gos) ) $go = trim($_GET["thisgo"]);
+	if(! isset($_POST["thisgo"])) $go = "GO:0000902";
+	elseif( array_key_exists(trim($_POST["thisgo"]), $gos) ) $go = trim($_POST["thisgo"]);
 	else $go = "GO:0000902";
+
+	if(! isset($_POST["specs"])) $spec = $arrSpeciesAll;
+	elseif( count($_POST["specs"]) < 2 ) $spec = $arrSpeciesAll;
+	elseif( SpeciesValidation($_POST["specs"], $arrSpeciesAll) ) $spec = SpeciesValidation($_POST["specs"], $arrSpeciesAll);
+	else $spec = $arrSpeciesAll;
+
+	if(! isset($_POST["type"])) $type = 1;
+	elseif(trim($_POST["type"]) == 1 ) $type = 1;
+	elseif(trim($_POST["type"]) == 2 ) $type = 2;
+	else $type = 1;
+
+	if(! isset($_POST["threshold"])) $threshold = 2;
+	elseif(trim($_POST["threshold"]) > 2 AND trim($_POST["threshold"]) < 8 ) $threshold = trim($_POST["threshold"]);
+	else $threshold = 2;
 
 	if(! isset($_GET["sizemanual"])) $booSizeManual = false;
 	elseif(trim($_GET["sizemanual"]) == "on" ) $booSizeManual  = true;
 	else $booSizeManual = false;
 
+	$mit = "real";
+	$ins = false;
+	$first = false;
+
 	$possible_numbers = range(2, 7);
 
-	$num = count($spec);
+	$numSpecies = count($spec);
 
-	$given_values = array("mit" => $mit, "ins" => $ins, "spec" => $spec, "first" => $first, "num" => $num, "go" => $go, 'sizemanual' => $booSizeManual);
+	$given_values = array("mit" => $mit, "ins" => $ins, "spec" => $spec, "first" => $first, "num" => $numSpecies, "type" => $type, "threshold" => $threshold, "go" => $go, 'sizemanual' => $booSizeManual);
 
+	$files = array();
+	$files["list"] = array();
+
+	if($type == 1) $files["output"] = $folderOutput  . "GO" . substr($go, 3) . "-Venn-Diagram-" . $numSpecies . "-" . implode("-", $spec) . ".svg";
+	else $files["output"] = $folderOutput  . "GO" . substr($go, 3) . "Edwards-Venn-Diagram-" . $numSpecies . "-" . implode("-", $spec) . ".svg";
 
 ?>
