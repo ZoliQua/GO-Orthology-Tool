@@ -37,26 +37,26 @@ class QueryGO {
 	public $values;
 	public $printelni = ""; // ebbe megy az SVG kódja
 	public $infos = ""; // ez az információk stringje
-	private $faj = array();
-	private $faj_mid2lil = array();
-	private $kiiras_beolv;
-	private $kiir_fajl;
-	private $kiiras = false;
-	private $species = array();
+	public $faj = array();
+	public $faj_mid2lil = array();
+	public $kiiras_beolv;
+	public $kiir_fajl;
+	public $kiiras = false;
+	public $species = array();
 	public $species_number = 0;
-	private $get_values = array();
-	private $fajok = array();
-	private $counter = array();
-	private $mappings = array();
-	private $unip2groupID = array();
-	private $groupID2unip = array();
-	private $groupID2spec = array();
-	private $container = array();
-	private $value_tomb = array();
-	private $protein_list = array();
-	private $protein_list2 = array();
-	private $folders;
-	private $arrSizeControl = array();
+	public $get_values = array();
+	public $fajok = array();
+	public $counter = array();
+	public $mappings = array();
+	public $unip2groupID = array();
+	public $groupID2unip = array();
+	public $groupID2spec = array();
+	public $container = array();
+	public $value_tomb = array();
+	public $protein_list = array();
+	public $protein_list2 = array();
+	public $folders;
+	public $arrSizeControl = array();
 	public $containertable = array();
 	public $strTablePrint = "";
 	public $strConservedCore = "";
@@ -90,11 +90,13 @@ class QueryGO {
 		$this->lista = self::db_processor($given_values["go"]);
 
 		$this->values = self::analyzer($faj);
+		
+		self::CreateTable();
 
 		return true;
 	}
 
-	private function mysql_conn (){
+	public function mysql_conn (){
 
 		$config['user'] = 'root';
 		$config['password'] = 'rootpass';
@@ -112,7 +114,7 @@ class QueryGO {
 		return true;
 	}
 
-	private function get_values($given_values, $faj) {
+	public function get_values($given_values, $faj) {
 
 		$this->get_values["mit"] = $given_values["mit"];
 		$this->get_values["species"] = $given_values["spec"];
@@ -174,7 +176,7 @@ class QueryGO {
 		return true;
 	}
 
-	private function db_processor($go) {
+	public function db_processor($go) {
 
 		$db_processor_time = microtime(true);
 
@@ -328,7 +330,7 @@ class QueryGO {
 		$this->infos .= TimeEnd($db_processor_time, "DB Processor");
 	}
 
-	private function analyzer($faj) {
+	public function analyzer($faj) {
 
 		// SVG File
 
@@ -619,11 +621,10 @@ class QueryGO {
 			$tomb_count["SC"] = "SC";
 			$tomb_count["SP"] = "SP";
 
-			self::CreateTable();
 			self::Kiir($svg_diagram->svg, $tomb_count, $translator);
 	}
 
-	private function leker_lista($fajl) {
+	public function leker_lista($fajl) {
 
 		$this->szetszed1 = "\n";
 		$this->szetszed2 = "\r";
@@ -666,7 +667,7 @@ class QueryGO {
 		return $listerGroups;
 	}
 
-	private function mappings_cycle($keys, $tomb, $fajKeys_mid2lil){
+	public function mappings_cycle($keys, $tomb, $fajKeys_mid2lil){
 
 		/*
 
@@ -733,7 +734,7 @@ class QueryGO {
 			return array("pair_container" => $pair_container, "tomb" => $tomb);
 	}
 
-	private function Kiir($svg_diagram, $tomb_count, $translator){
+	public function Kiir($svg_diagram, $tomb_count, $translator){
 
 		$csere = $svg_diagram;
 
@@ -779,14 +780,13 @@ class QueryGO {
 			<THEAD>
 				<TR>
 				<TH><B>Group</B></TH>
-				<TH><B>Weighted Av. H/M</B></TH>
-				<TH><B>Total H/M ratio</B></TH>
-				<TH><B>Hits in all species</B></TH>
-				<TH><B>Tot. Members</B></TH>
-				<TH><B>Species (hit)</B></TH>
-				<TH><B>Species (total)</B></TH>
-				<TH><B>List of Members</B></TH>
-				<TH><B>More</B></TH>
+				<TH><B>Average H/M</B></TH>
+				<TH><B>Total H/M</B></TH>
+				<TH><B>Hit species</B></TH>
+				<TH><B>Total species</B></TH>
+				<TH><B>Hit species in total species</B></TH>
+				<TH><B>Description</B></TH>
+				<TH><B>List of Hit species</B></TH>
 				</TR>
 			</THEAD>\n";
 
@@ -794,8 +794,8 @@ class QueryGO {
 			<THEAD>
 				<TR>
 				<TH><B>Group</B></TH>
-				<TH><B>Weighted Av. H/M</B></TH>
-				<TH><B>Species (total)</B></TH>
+				<TH><B>Average H/M</B></TH>
+				<TH><B>Total species</B></TH>
 				<TH><B>A. thaliana</B></TH>
 				<TH><B>C. elegans</B></TH>
 				<TH><B>D. melanogaster</B></TH>
@@ -888,26 +888,25 @@ class QueryGO {
 
 					$numMeasureTotalSpeciesHit = ((strpos($txtListOfProteins, "STRONG") == true) ? ($numMeasureTotalSpeciesHit+1) : $numMeasureTotalSpeciesHit );
 
-					$strRowNovelAnnotation[$v] = "\t<TD> " . ((strpos($txtListOfProteins, "STRONG") == true) ? "<B>HIT</B>: " : "" ) . $txtListOfProteins . "</TD>\n";
+					$strRowNovelAnnotation[$v] = "\t " . ((strpos($txtListOfProteins, "STRONG") == true) ? "<TD><B>HIT</B>: " : "<TD bgcolor=\"#32CD32\"><I><B>PREDICTION</B></I>: " ) . $txtListOfProteins . "</TD>\n";
 				}
 
 				if($numMeasureTotalSpeciesHit < $this->get_values["threshold"]) continue;
 
 				$numRatioWAvHM = self::TableRowStatistics($arrMeasureRatio);
-				$numRatioHM = number_format( (count($this_keys) / $numMeasureTotalMember), 3);
+				$numRatioHM = number_format( ( $numMeasureTotalHit / $numMeasureTotalMember), 3);
 
 				$row = array();
 
 				$row[] = "<TR>\n";
-				$row[] = "\t<TD>$groupID (".$numMeasureTotalSpecies.")</TD>\n";
+				$row[] = "\t<TD><i><A href='http://eggnogdb.embl.de/#/app/results?target_nogs=$groupID' target='_blank'>$groupID (".$numMeasureTotalSpecies.")</A></i></TD>\n";
 				$row[] = "\t<TD>" . $numRatioWAvHM . "</TD>\n";
 				$row[] = "\t<TD>" . $numRatioHM . "</TD>\n";
-				$row[] = "\t<TD>" . $numMeasureTotalSpeciesHit . " hit id(s) in " . $numMeasureTotalSpecies . " species" . "</TD>\n";
-				$row[] = "\t<TD>" . $numMeasureTotalMember . " unique UniProt iDs belonging to this eggNOG Group in ". count($arrMembers) ." hit species</TD>\n";
 				$row[] = "\t<TD>" . $numMeasureTotalSpeciesHit . "</TD>\n";
 				$row[] = "\t<TD>" . $numMeasureTotalSpecies . "</TD>\n";
+				$row[] = "\t<TD>" . $numMeasureTotalSpeciesHit . " hit species in " . $numMeasureTotalSpecies . " species" . "</TD>\n";
+				$row[] = "\t<TD>" . $numMeasureTotalHit . " hit proteins in ". count($arrMembers) ." hit species from <BR>" . $numMeasureTotalMember . "  total proteins in " . $numMeasureTotalSpecies . " total species</TD>\n";
 				$row[] = "\t<TD>" . implode(", ", $arrMembers) . "</TD>\n";
-				$row[] = "\t<TD><i><A href='http://eggnogdb.embl.de/#/app/results?target_nogs=$groupID' target='_blank'>link to eggNOG</A></i></TD>\n";
 
 				$row[] = "</TR>\n";
 
@@ -952,7 +951,7 @@ class QueryGO {
 
 	}
 
-	private function TableRowStatistics($arrMeasureRatio)  {
+	public function TableRowStatistics($arrMeasureRatio)  {
 
 		$numThisRatio = 0;
 
