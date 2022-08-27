@@ -59,6 +59,7 @@ class QueryGO {
 	public $arrSizeControl = array();
 	public $containertable = array();
 	public $strTablePrint = "";
+	public $strTablePrintExpanded = "";
 	public $strConservedCore = "";
 	public $strNovelAnnotations = "";
 
@@ -771,6 +772,9 @@ class QueryGO {
 		$this->strTablePrint .= "<BR>\n<H1 stlye=\"center\">Current Annotations based on Orthology</H1>\n";
 		$this->strTablePrint .= "<div style=\"text-align: center;\">Hit species threshold: <b>" . $this->get_values["threshold"] . "</b></div>\n";
 
+		$this->strTablePrintExpanded .= "<BR>\n<H1 stlye=\"center\">Current Annotations based on Orthology (Expanded)</H1>\n";
+		$this->strTablePrintExpanded .= "<div style=\"text-align: center;\">Hit species threshold: <b>" . $this->get_values["threshold"] . "</b></div>\n";
+
 		$this->strConservedCore .= "<BR>\n<H1 stlye=\"center\">Conserved Core</H1>\n";
 		$this->strConservedCore .= "<div style=\"text-align: center;\">Hit species threshold: <b>" . $this->get_values["threshold"] . "</b></div>\n";
 
@@ -813,6 +817,10 @@ class QueryGO {
 			<DIV align='center'>
 			<TABLE cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"display\" id=\"results\">\n";
 
+		$this->strTablePrintExpanded .= "<P></P>
+			<DIV align='center'>
+			<TABLE cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"display\" id=\"resultsexpanded\">\n";
+
 		$this->strConservedCore .= "<P></P>
 			<DIV align='center'>
 			<TABLE cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"display\" id=\"conservedcore\">\n";
@@ -822,10 +830,12 @@ class QueryGO {
 			<TABLE cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"display\" id=\"novelannotations\">\n";
 
 		$this->strTablePrint .= $strTableHead;
+		$this->strTablePrintExpanded .= $strTableHeadNovelAnnotation;
 		$this->strConservedCore .= $strTableHead;
 		$this->strNovelAnnotations .= $strTableHeadNovelAnnotation;
 
 		$this->strTablePrint .= "\t\t\t<TBODY>\n";
+		$this->strTablePrintExpanded .= "\t\t\t<TBODY>\n";
 		$this->strConservedCore .= "\t\t\t<TBODY>\n";
 		$this->strNovelAnnotations .= "\t\t\t<TBODY>\n";
 
@@ -840,6 +850,8 @@ class QueryGO {
 		$strRowNovelAnnotationBase["HS"] = "\t<TD>-</TD>\n";
 		$strRowNovelAnnotationBase["SC"] = "\t<TD>-</TD>\n";
 		$strRowNovelAnnotationBase["SP"] = "\t<TD>-</TD>\n";
+
+		$strRowExpandedResultsBase = $strRowNovelAnnotationBase;
 
 		foreach ($this->containertable as $this_key => $groups) {
 
@@ -904,8 +916,10 @@ class QueryGO {
 				$row[] = "\t<TD>" . $numRatioHM . "</TD>\n";
 				$row[] = "\t<TD>" . $numMeasureTotalSpeciesHit . "</TD>\n";
 				$row[] = "\t<TD>" . $numMeasureTotalSpecies . "</TD>\n";
-				$row[] = "\t<TD>" . $numMeasureTotalSpeciesHit . " hit species in " . $numMeasureTotalSpecies . " species" . "</TD>\n";
-				$row[] = "\t<TD>" . $numMeasureTotalHit . " hit proteins in ". count($arrMembers) ." hit species from <BR>" . $numMeasureTotalMember . "  total proteins in " . $numMeasureTotalSpecies . " total species</TD>\n";
+				$row[] = "\t<TD>" . $numMeasureTotalHit . "</TD>\n";
+				$row[] = "\t<TD>" . $numMeasureTotalMember . "</TD>\n";
+				// $row[] = "\t<TD>" . $numMeasureTotalSpeciesHit . " hit species in " . $numMeasureTotalSpecies . " species" . "</TD>\n";
+				// $row[] = "\t<TD>" . $numMeasureTotalHit . " hit proteins in ". count($arrMembers) ." hit species from <BR>" . $numMeasureTotalMember . "  total proteins in " . $numMeasureTotalSpecies . " total species</TD>\n";
 				$row[] = "\t<TD>" . implode(", ", $arrMembers) . "</TD>\n";
 
 				$row[] = "</TR>\n";
@@ -928,24 +942,30 @@ class QueryGO {
 		}
 
 		$this->strTablePrint .= "\t\t\t</TBODY>\n";
+		$this->strTablePrintExpanded .= "\t\t\t</TBODY>\n";
 		$this->strConservedCore .= "\t\t\t</TBODY>\n";
 		$this->strNovelAnnotations .= "\t\t\t</TBODY>\n";
 
 		$this->strTablePrint .= str_replace("HEAD", "FOOT", $strTableHead);
+		$this->strTablePrintExpanded .= str_replace("HEAD", "FOOT", $strTableHead);
 		$this->strConservedCore .= str_replace("HEAD", "FOOT", $strTableHead);
 		$this->strNovelAnnotations .= str_replace("HEAD", "FOOT", $strTableHeadNovelAnnotation);
 
 		$this->strTablePrint .= "</TABLE>\n";
+		$this->strTablePrintExpanded .= "</TABLE>\n";
 		$this->strConservedCore .= "</TABLE>\n";
 		$this->strNovelAnnotations .= "</TABLE>\n";
 		$this->strTablePrint .= "</DIV>";
+		$this->strTablePrintExpanded .= "</DIV>";
 		$this->strConservedCore .= "</DIV>";
 		$this->strNovelAnnotations .= "</DIV>";
 
 		$this->strTablePrint .= "<BR>\n<div class=\"infobox\">\n<A href=\"#\" target=\"_blank\">Download this table</A> in CSV file.</div><BR>";
+		$this->strTablePrintExpanded .= "<BR>\n<div class=\"infobox\">\n<A href=\"#\" target=\"_blank\">Download this table</A> in CSV file.</div><BR>";
 		$this->strConservedCore.= "<BR>\n<div class=\"infobox\">\n<A href=\"#\" target=\"_blank\">Download this table</A> in CSV file.</div><BR>";
 		$this->strNovelAnnotations .= "<BR>\n<div class=\"infobox\">\n<A href=\"#\" target=\"_blank\">Download this table</A> in CSV file.</div><BR>";
 
+		$this->strTablePrint .= $this->strTablePrintExpanded;
 		$this->strTablePrint .= $this->strConservedCore;
 		$this->strTablePrint .= $this->strNovelAnnotations;
 

@@ -54,7 +54,6 @@
 			self::exchanger($replace);
 
 			return $this->replacedPermutation;
-
 		}
 
 		private function factorial($num) {
@@ -206,6 +205,9 @@
 
 	function PrintTheOutput($strVennDiagram = false, $strInfoPostVD = false, $strTable = false, $strInfoPostTable = false, $num = false, $this_file, $go, $gos, $species) {
 
+		global $spec;
+		global $threshold;
+
 		$strOutput = "";
 
 		if($strVennDiagram) {
@@ -224,7 +226,7 @@
 
 		$strOutput .= "<BR><BR>\n<H1 stlye=\"center\">New Query</H1><BR>
 			<div class=\"text\">
-			<p style=\"font-style: italic;\">Please select a GO annotation, then 2-7 species with CTRL button (or CMD in Mac) to see their orthological GO analysis<BR> with Gene Ontology Extension Tool. You can choose the visaulization from three options.</p><BR>
+			<p style=\"font-style: italic;\">Please select a GO annotation, then 2-7 species with CTRL button (or CMD in Mac) to see their orthological GO analysis<BR> with Gene Ontology Extension Tool. You can choose the visaulization from three options. <BR><div style='color: red;'>CSV download is currently unavailable I'm working on to fix.</div></p><BR>
 			<FORM method=\"POST\" name=\"goext\" action=\"main.php\">
 			<TABLE align=center border=0 cellpadding=7 cellspacing=0>
 
@@ -234,7 +236,7 @@
 					<TD align=\"center\" width=\"50%\"><div class=dtext >
 				    	<SELECT name=\"thisgo\" id=\"value_c\">";
 
-		foreach ($gos as $k => $v) $strOutput .= "<OPTION value='$k'>$k - $v</OPTION>\n";
+		foreach ($gos as $k => $v) $strOutput .= "<OPTION value='$k' " . ($k == $go ? "selected" : "" ) . ">$k - $v</OPTION>\n";
 
 		$strOutput .= "
 				 		</SELECT> &nbsp;</div>
@@ -248,7 +250,7 @@
 					<TD align=\"center\" width=\"50%\"><div class=dtext >
 				    	<SELECT name=\"specs[]\" size=\"7\" id=\"value_q\" multiple>";
 
-		foreach ($species as $v => $arr) $strOutput .= "<OPTION value='$v'>".$arr["long"]."</OPTION>\n";
+		foreach ($species as $v => $arr) $strOutput .= "<OPTION value='$v'".(in_array($v, $spec) ? " selected" : "").">".$arr["long"]."</OPTION>\n";
 
 		$strOutput .= "
 				 		</SELECT> &nbsp;</div>
@@ -276,12 +278,12 @@
 					<TD align=\"center\" width=\"50%\"><div class=dtext >
 				    	<SELECT name=\"threshold\" id=\"value_k\">
 
-							<OPTION value=\"2\">2 species</OPTION>
-							<OPTION value=\"3\">3 species</OPTION>
-							<OPTION value=\"4\">4 species</OPTION>
-							<OPTION value=\"5\">5 species</OPTION>
-							<OPTION value=\"6\">6 species</OPTION>
-							<OPTION value=\"7\">7 species</OPTION>
+							<OPTION value=\"2\"".($threshold == 2 ? " selected" : "").">2 species</OPTION>
+							<OPTION value=\"3\"".($threshold == 3 ? " selected" : "").">3 species</OPTION>
+							<OPTION value=\"4\"".($threshold == 4 ? " selected" : "").">4 species</OPTION>
+							<OPTION value=\"5\"".($threshold == 5 ? " selected" : "").">5 species</OPTION>
+							<OPTION value=\"6\"".($threshold == 6 ? " selected" : "").">6 species</OPTION>
+							<OPTION value=\"7\"".($threshold == 7 ? " selected" : "").">7 species</OPTION>
 
 				 		</SELECT> &nbsp;</div>
 				 	</TD>

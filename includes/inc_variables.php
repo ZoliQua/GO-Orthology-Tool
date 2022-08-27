@@ -151,9 +151,9 @@
 
 	$arrSpeciesAll = ["at", "ce", "dm", "dr", "hs", "sc", "sp"];
 
-	if(! isset($_POST["thisgo"])) $go = "GO:0000902";
+	if(! isset($_POST["thisgo"])) $go = "GO:0051726";
 	elseif( array_key_exists(trim($_POST["thisgo"]), $gos) ) $go = trim($_POST["thisgo"]);
-	else $go = "GO:0000902";
+	else $go = "GO:0051726";
 
 	if(! isset($_POST["specs"])) $spec = $arrSpeciesAll;
 	elseif( count($_POST["specs"]) < 2 ) $spec = $arrSpeciesAll;
