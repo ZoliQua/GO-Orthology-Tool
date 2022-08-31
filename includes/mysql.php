@@ -46,7 +46,7 @@ header('Content-Type: text/html; charset=UTF-8');
 
 $config['host'] = 'localhost';		// host name
 $config['user'] = 'root';			// database username
-$config['pass'] = 'rootpass';			// database password
+$config['pass'] = 'zolis';			// database password
 $config['data'] = 'ortholog';		// database name
 
 $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['data']);

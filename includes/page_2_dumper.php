@@ -112,7 +112,6 @@ class QueryGOExport extends QueryGO {
 			$id++;
 
 			$this_keys = explode(",", $this_key);
-			$numMeasureTotalSpecies = count($this_keys);
 
 			// Foreaching each of the Orthology Groups
 
@@ -120,6 +119,7 @@ class QueryGOExport extends QueryGO {
 
 				$strRow = $strRowBase;
 				$numMeasureTotalSpeciesHit = 0;
+				$numMeasureTotalSpecies = 0;
 				
 				foreach ($this_keys as $k => $v) {
 
@@ -129,19 +129,17 @@ class QueryGOExport extends QueryGO {
 					$arrListOfHitProteins = array();
 
 					foreach ($groups[$groupID][$this->faj[strtolower($v)]["mid"]] as $key => $strUniProt) {
+
+						$strUniprotCleared = strip_tags($strUniProt);
+					 	$arrListOfAllProteins[] = $strUniprotCleared;
 					 	
 					 	$booAnnotated = ((strpos($strUniProt, "STRONG") == true) ? true : false);
-
-					 	if($booAnnotated) {
-					 		$strUniprotCleared = strip_tags($strUniProt);
-					 		$arrListOfHitProteins[] = $strUniprotCleared;
-					 		$arrListOfAllProteins[] = $strUniprotCleared;
-					 	}
-
-					 	else $arrListOfAllProteins[] = strip_tags($strUniProt);
+					 	if($booAnnotated) $arrListOfHitProteins[] = $strUniprotCleared;
 					 }
 
 					$strListOfAllProteins = implode(";", $arrListOfAllProteins);
+
+					if(count($arrListOfAllProteins) > 0) $numMeasureTotalSpecies++;
 
 					if(count($arrListOfHitProteins) > 0) {
 						$strListOfHitProteins = implode(";", $arrListOfHitProteins);
@@ -157,7 +155,7 @@ class QueryGOExport extends QueryGO {
 				$strRow["numAll"] = $numMeasureTotalSpecies. ",";
 				$strRow["numHit"] = $numMeasureTotalSpeciesHit . ",";
 
-				$this->strTablePrint .= implode("", $strRow) . "\n";
+				$this->strTablePrint .= substr(implode("", $strRow), 0, -1)  . "\n";
 			}
 		}
 

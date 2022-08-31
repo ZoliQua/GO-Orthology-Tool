@@ -44,12 +44,12 @@
 
 	$folderIncl = "includes/";
 
-	include_once($folderIncl . "mysql.php"); // MySQL connect
+	// include_once($folderIncl . "mysql.php"); // MySQL connect
 	include_once($folderIncl . "mylog.php"); // MyLOG Logger file
 
 	include_once($folderIncl . "inc_functions.php"); // INCL functions
 	include_once($folderIncl . "inc_variables.php"); // INCL variables
-	include_once($folderIncl . "inc_analyzer.php"); // INCL variables	
+	include_once($folderIncl . "inc_analyzer_dumper.php"); // INCL variables	
 
 // LOGGING
 

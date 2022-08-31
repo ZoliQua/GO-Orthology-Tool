@@ -90,6 +90,19 @@ else {
 		} );
 
 
+		$(document).ready(function() {
+			
+		    $('#resultsexpanded').DataTable( {
+
+		        "bProcessing": true,
+		   		"bJQueryUI": true,
+       			"order": [[ 1, "desc" ]],
+       			"lengthMenu": [[10, 20, 40, 80, -1], [10, 20, 40, 80, "All"]]
+
+    		} );
+
+		} );
+
 
 		$(document).ready(function() {
 			
